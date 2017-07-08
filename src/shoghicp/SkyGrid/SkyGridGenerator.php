@@ -1,35 +1,63 @@
 <?php
 
-namespace shoghicp\SkyGridGenerator;
+namespace shoghicp\SkyGrid;
 
 use pocketmine\level\generator\Generator;
-use pocketmine\level\generator\GenerationChunkManager;
+use pocketmine\level\ChunkManager;
 use pocketmine\math\Vector3;
 use pocketmine\utils\Random;
 use pocketmine\block\Block;
 
-class SkyGridGenerator extends Generator{
-	private $normalp, $level, $options, $random, $floatSeed, $total, $cump, $gridlength;
+class SkyGridGenerator extends Generator {
+	/** @var array */
+	private $options = [], $cump = [], $normalp = [];
 	
-	public function pickBlock($size){
+	/** @var int */
+	private $gridLength = 4, $total = 0;
+	
+	/** @var float */
+	private $floatSeed;
+	
+	/** @var Random */
+	private $random;
+	
+	/** @var ChunkManager */
+	private $level;
+	
+	/**
+	 * @param int $size
+	 *
+	 * @return array
+	 */
+	public function pickBlock(int $size) {
 		$r = $this->random->nextFloat() * $size;
-		foreach($this->cump as $key => $value){
-			if($r >= $value[0] and $r < $value[1]){
+		foreach($this->cump as $key => $value) {
+			if($r >= $value[0] and $r < $value[1]) {
 				return $key;
 			}
 		}
 	}
 	
-	public function getSettings(){
+	/**
+	 * @return array
+	 */
+	public function getSettings() {
 		return $this->options;
 	}
 
-	public function getName(){
+	/**
+	 * @return string
+	 */
+	public function getName() {
 		return "skygrid";
 	}
 	
-	public function __construct(array $options = []){
-		$this->gridlength = 4;
+	/**
+	 * Constructor.
+	 *
+	 * @param array $options
+	 */
+	public function __construct(array $options = []) {
 		$this->options = $options;
 		$this->normalp = [
 			Block::STONE => 120,
@@ -74,42 +102,44 @@ class SkyGridGenerator extends Generator{
 		];
 	}
 	
-	public function init(GenerationChunkManager $level, Random $random){
+	/**
+	 * @param ChunkManager $level
+	 * @param Random       $random
+	 */
+	public function init(ChunkManager $level, Random $random) {
 		$this->level = $level;
 		$this->random = $random;
 		$this->floatSeed = $this->random->nextFloat();
-		$this->total = 0;
-		$this->cump = [];
 		
-		foreach($this->normalp as $key => $value){
+		foreach($this->normalp as $key => $value) {
 			$this->cump[$key] = [$this->total, $this->total + $value];
 			$this->total += $value;
 		}
 	}
-		
-	public function generateChunk($chunkX, $chunkZ){
+	
+	public function generateChunk($chunkX, $chunkZ) {
 		$this->random->setSeed((int) (($chunkX * 0xdead + $chunkZ * 0xbeef) * $this->floatSeed));
 		
 		$chunk = $this->level->getChunk($chunkX, $chunkZ);
 		
-		for($y = 0; $y < 128; $y += $this->gridlength){
-			for($z = 0; $z < 16; $z += $this->gridlength){
-				for($x = 0; $x < 16; $x += $this->gridlength){
+		for($y = 0; $y < 128; $y += $this->gridLength) {
+			for($z = 0; $z < 16; $z += $this->gridLength) {
+				for($x = 0; $x < 16; $x += $this->gridLength) {
 					$blockId = $this->pickBlock($this->total);
 										
-					if($blockId === Block::WOOL){
+					if($blockId === Block::WOOL) {
 						$chunk->setBlockId($x, $y, $z, $blockId);
 						$chunk->setBlockData($x, $y, $z, $this->random->nextInt() & 0xf);
-					}elseif($blockId === 6 or $blockId === 31 or $blockId === 32 or $blockId === 37 or $blockId === 38 or $blockId === 39 or $blockId === 40 or $blockId === 83){
+					} elseif($blockId === 6 or $blockId === 31 or $blockId === 32 or $blockId === 37 or $blockId === 38 or $blockId === 39 or $blockId === 40 or $blockId === 83) {
 						$chunk->setBlockId($x, $y, $z, 3);
 						$chunk->setBlockId($x, $y + 1, $z, $blockId);
-						if($blockId === 83){
+						if($blockId === 83) {
 							$chunk->setBlockId($x + 1, $y, $z, 9);
 						}
-					}elseif($blockId === 83){
+					} elseif($blockId === 83) {
 						$chunk->setBlockId($x, $y, $z, 12);
 						$chunk->setBlockId($x, $y + 1, $z, $blockId);
-					}else{
+					} else {
 						$chunk->setBlockId($x, $y, $z, $blockId);
 					}
 				}
@@ -117,11 +147,16 @@ class SkyGridGenerator extends Generator{
 		}
 	}
 	
-	public function populateChunk($chunkX, $chunkZ){
+	public function populateChunk($chunkX, $chunkZ) {
 
 	}
 	
-	public function getSpawn(){
+	/**
+	 * Returns the spawn position of the SkyGrid.
+	 *
+	 * @return Vector3
+	 */
+	public function getSpawn() {
 		return new Vector3(128.5, 64, 128.5);
 	}
 }

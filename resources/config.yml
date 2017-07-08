@@ -1,0 +1,2 @@
+# Set to false to stop the SkyGrid generator being registered
+enabled: true
